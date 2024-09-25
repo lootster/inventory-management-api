@@ -87,4 +87,19 @@ class InventoryServiceTest {
         assertEquals("A high-end gaming laptop", result.getDescription());
     }
 
+    @Test
+    void deleteItemFromService() {
+        // Arrange
+        InventoryService service = new InventoryService();
+        Inventory item = new Inventory("Laptop", 10, BigDecimal.valueOf(1500.00), "A high-end laptop");
+        service.addItem(item);
+
+        // Act
+        boolean isDeleted = service.deleteItem(item.getId());
+
+        // Assert
+        assertTrue(isDeleted, "Item should be successfully deleted");
+        Optional<Inventory> foundItem = service.getItemById(item.getId());
+        assertTrue(foundItem.isEmpty(), "Item should no longer exist after deletion");
+    }
 }

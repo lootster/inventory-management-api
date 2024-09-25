@@ -36,4 +36,14 @@ public class InventoryService {
             return null;  // Handle error case properly later
         }
     }
+
+    public boolean deleteItem(Long id) {
+        Optional<Inventory> existingItem = getItemById(id);
+        if (existingItem.isPresent()) {
+            inventoryList.remove(existingItem.get());
+            return true;  // Item successfully deleted
+        } else {
+            return false;  // Item not found
+        }
+    }
 }
