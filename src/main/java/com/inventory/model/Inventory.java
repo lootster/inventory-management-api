@@ -1,12 +1,8 @@
 package com.inventory.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
+import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Entity
 @Table(name = "inventory")
@@ -15,27 +11,25 @@ public class Inventory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String itemName;
-
+    private String name;
+    private String description;
+    @Column(precision = 38, scale = 2)
+    private BigDecimal price;
     private int stockQuantity;
 
-    private BigDecimal price;
 
-    private String description;
-
-    // Constructor with fields
-    public Inventory(String itemName, int stockQuantity, BigDecimal price, String description) {
-        this.itemName = itemName;
-        this.stockQuantity = stockQuantity;
-        this.price = price;
-        this.description = description;
+    public Inventory() {
     }
 
-    // Default constructor required by JPA
-    public Inventory() {}
+    public Inventory(String name, String description, BigDecimal price, int stockQuantity) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+    }
 
-    // Getters and setters
+    // Getters and Setters
+
     public Long getId() {
         return id;
     }
@@ -44,20 +38,20 @@ public class Inventory {
         this.id = id;
     }
 
-    public String getItemName() {
-        return itemName;
+    public String getName() {
+        return name;
     }
 
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getStockQuantity() {
-        return stockQuantity;
+    public String getDescription() {
+        return description;
     }
 
-    public void setStockQuantity(int stockQuantity) {
-        this.stockQuantity = stockQuantity;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public BigDecimal getPrice() {
@@ -68,11 +62,28 @@ public class Inventory {
         this.price = price;
     }
 
-    public String getDescription() {
-        return description;
+    public int getStockQuantity() {
+        return stockQuantity;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Inventory inventory = (Inventory) o;
+        return Objects.equals(name, inventory.name) &&
+                Objects.equals(description, inventory.description) &&
+                Objects.equals(price, inventory.price) &&
+                stockQuantity == inventory.stockQuantity;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, description, price, stockQuantity);
+    }
+
 }

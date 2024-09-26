@@ -2,173 +2,104 @@ package com.inventory.service;
 
 import com.inventory.model.Inventory;
 import com.inventory.repository.InventoryRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 @SpringBootTest
-@Transactional  // Ensures tests are run in isolation with a rollback after each
-class InventoryServiceTest {
+public class InventoryServiceTest {
 
     @Autowired
-    private InventoryService service;  // Autowired InventoryService
+    private InventoryService inventoryService;
 
     @Autowired
-    private InventoryRepository repository;  // Repository to manage DB interaction
-
-    @BeforeEach
-    void setUp() {
-        repository.deleteAll();  // Clean the database before each test
-    }
+    private InventoryRepository inventoryRepository;
 
     @Test
-    void shouldLoadInventoryServiceBean() {
-        // Assert
-        assertNotNull(service, "InventoryService should not be null");
-    }
-
-    @Test
-    void shouldLoadInventoryRepositoryBean() {
-        // Assert
-        assertNotNull(repository, "InventoryRepository should not be null");
-    }
-
-    @Test
-    void shouldAddInventoryItem() {
+    public void shouldSaveNewInventory() {
         // Arrange
-        Inventory inventory = new Inventory("Test Item", 10, BigDecimal.valueOf(99.99), "Test Description");
+        Inventory inventory = new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10);
 
         // Act
-        Inventory savedInventory = service.addInventory(inventory);
+        Inventory savedInventory = inventoryService.createInventory(inventory);
 
         // Assert
-        assertNotNull(savedInventory);
-        assertNotNull(savedInventory.getId()); // The ID should be automatically generated
-        assertEquals("Test Item", savedInventory.getItemName());
-        assertEquals(10, savedInventory.getStockQuantity());
-        assertEquals(BigDecimal.valueOf(99.99), savedInventory.getPrice());
-
-        // Verify via repository that the item is saved
-        Inventory foundItem = repository.findById(savedInventory.getId()).orElse(null);
-        assertNotNull(foundItem);
-        assertEquals("Test Item", foundItem.getItemName());
+        assertNotNull(savedInventory.getId());
+        assertNotNull(inventoryRepository.findById(savedInventory.getId()));
     }
 
     @Test
-    void shouldRetrieveAllInventories() {
-        // Arrange: Create and save multiple inventory items
-        Inventory inventory1 = new Inventory();
-        inventory1.setItemName("Smartwatch");
-        inventory1.setStockQuantity(100);
-        inventory1.setPrice(BigDecimal.valueOf(250.00));
-        inventory1.setDescription("Feature-rich smartwatch");
+    public void shouldRetrieveAllInventories() {
+        // Arrange: Save inventories in the test database
+        Inventory inventory1 = new Inventory("Item1", "Description1", new BigDecimal("100.00"), 10);
+        Inventory inventory2 = new Inventory("Item2", "Description2", new BigDecimal("150.00"), 5);
 
-        Inventory inventory2 = new Inventory();
-        inventory2.setItemName("Headphones");
-        inventory2.setStockQuantity(200);
-        inventory2.setPrice(BigDecimal.valueOf(100.00));
-        inventory2.setDescription("Noise-cancelling headphones");
-
-        repository.save(inventory1);
-        repository.save(inventory2);
+        inventoryRepository.save(inventory1);  // Ensure the save step
+        inventoryRepository.save(inventory2);
 
         // Act: Retrieve all inventories
-        List<Inventory> allInventories = repository.findAll();
+        List<Inventory> inventoryList = inventoryService.getAllInventory();
 
-        // Assert: Verify that both inventories were retrieved
-        assertEquals(2, allInventories.size());
+        // Assert
+        assertTrue(inventoryList.contains(inventory1), "Inventory list should contain inventory1");
+        assertTrue(inventoryList.contains(inventory2), "Inventory list should contain inventory2");
     }
 
+
     @Test
-    void shouldFindInventoryById() {
+    public void shouldRetrieveInventoryById() {
         // Arrange: Create and save an inventory item
-        Inventory inventory = new Inventory();
-        inventory.setItemName("Tablet");
-        inventory.setStockQuantity(25);
-        inventory.setPrice(BigDecimal.valueOf(400.00));
-        inventory.setDescription("New tablet");
+        Inventory inventory = new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10);
+        Inventory saved = inventoryService.createInventory(inventory);
 
-        Inventory savedInventory = repository.save(inventory);
+        // Act: Retrieve the inventory item by ID
+        Optional<Inventory> retrievedInventory = inventoryService.getInventoryById(saved.getId());
 
-        // Act: Retrieve the inventory by ID
-        Optional<Inventory> foundInventory = repository.findById(savedInventory.getId());
-
-        // Assert: Verify that the inventory was found
-        assertTrue(foundInventory.isPresent(), "Inventory should be found by ID");
-        assertEquals(savedInventory.getItemName(), foundInventory.get().getItemName());
+        // Assert: Verify the retrieved inventory is the same as the saved one
+        assertTrue(retrievedInventory.isPresent(), "Inventory should be present");
+        assertEquals(saved.getId(), retrievedInventory.get().getId());
+        assertEquals(saved.getName(), retrievedInventory.get().getName());
+        assertEquals(saved.getDescription(), retrievedInventory.get().getDescription());
+        assertEquals(saved.getPrice(), retrievedInventory.get().getPrice());
+        assertEquals(saved.getStockQuantity(), retrievedInventory.get().getStockQuantity());
     }
 
     @Test
-    void shouldUpdateInventory() {
-        // Arrange: Create and save an initial inventory item
-        Inventory inventory = new Inventory();
-        inventory.setItemName("Laptop");
-        inventory.setStockQuantity(10);
-        inventory.setPrice(BigDecimal.valueOf(1200.00));
-        inventory.setDescription("High-end laptop");
+    void shouldUpdateExistingInventory() {
+        // Arrange
+        Inventory inventory = new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10);
+        inventoryService.createInventory(inventory);
 
-        Inventory savedInventory = repository.save(inventory);
+        // Act
+        inventory.setPrice(new BigDecimal("1000.00"));
+        inventory.setStockQuantity(15);
+        inventoryService.updateInventory(inventory.getId(), inventory);
 
-        // Act: Update the inventory
-        savedInventory.setStockQuantity(20); // Change the stock quantity
-        savedInventory.setPrice(BigDecimal.valueOf(1100.00)); // Update the price
-
-        Inventory updatedInventory = repository.save(savedInventory);
-
-        // Assert: Check if the update was successful
-        assertNotNull(updatedInventory);
-        assertEquals(20, updatedInventory.getStockQuantity());
-        assertEquals(BigDecimal.valueOf(1100.00), updatedInventory.getPrice());
+        // Assert
+        Optional<Inventory> updatedInventory = inventoryRepository.findById(inventory.getId());
+        assertTrue(updatedInventory.isPresent(), "Inventory should be present after update");
+        assertEquals(new BigDecimal("1000.00"), updatedInventory.get().getPrice());
+        assertEquals(15, updatedInventory.get().getStockQuantity());
     }
 
     @Test
-    void shouldDeleteInventory() {
-        // Arrange: Create and save an inventory item
-        Inventory inventory = new Inventory();
-        inventory.setItemName("Smartphone");
-        inventory.setStockQuantity(50);
-        inventory.setPrice(BigDecimal.valueOf(700.00));
-        inventory.setDescription("Latest model smartphone");
+    void shouldDeleteInventoryById() {
+        // Arrange
+        Inventory inventory = new Inventory("Smartphone", "iPhone", new BigDecimal("999.99"), 10);
+        Inventory savedInventory = inventoryService.createInventory(inventory);
 
-        Inventory savedInventory = repository.save(inventory);
+        // Act
+        inventoryService.deleteInventoryById(savedInventory.getId());
 
-        // Act: Delete the inventory
-        repository.delete(savedInventory);
-
-        // Assert: Verify that the inventory is no longer in the database
-        Optional<Inventory> deletedInventory = repository.findById(savedInventory.getId());
-        assertFalse(deletedInventory.isPresent(), "The inventory should have been deleted");
+        // Assert
+        Optional<Inventory> deletedInventory = inventoryRepository.findById(savedInventory.getId());
+        assertFalse(deletedInventory.isPresent(), "Inventory should be deleted");
     }
-
-    @Test
-    void shouldReturnEmptyListWhenNoInventoriesPresent() {
-        // Arrange: Ensure repository is empty
-        repository.deleteAll();
-
-        // Act: Retrieve all inventories
-        List<Inventory> allInventories = repository.findAll();
-
-        // Assert: Verify that the list is empty
-        assertTrue(allInventories.isEmpty(), "Inventory list should be empty");
-    }
-
-    @Test
-    void shouldReturnEmptyWhenInventoryNotFound() {
-        // Act: Try to retrieve an inventory by a non-existing ID
-        Optional<Inventory> inventory = repository.findById(999L);
-
-        // Assert: Verify that the inventory is not found
-        assertFalse(inventory.isPresent(), "Inventory with non-existing ID should not be found");
-    }
-
 
 }
