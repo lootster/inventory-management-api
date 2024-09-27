@@ -5,6 +5,9 @@ import com.inventory.repository.InventoryRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -102,4 +105,25 @@ public class InventoryServiceTest {
         assertFalse(deletedInventory.isPresent(), "Inventory should be deleted");
     }
 
+    @Test
+    public void shouldRetrievePagedAndSortedInventory() {
+        // Arrange
+        Inventory inventory1 = new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10);
+        Inventory inventory2 = new Inventory("Mouse", "Logitech", new BigDecimal("50.00"), 100);
+        Inventory inventory3 = new Inventory("Keyboard", "Corsair", new BigDecimal("150.00"), 50);
+
+        inventoryRepository.save(inventory1);
+        inventoryRepository.save(inventory2);
+        inventoryRepository.save(inventory3);
+
+        // Act: Retrieve inventory sorted by name and limited to 2 per page
+        PageRequest pageRequest = PageRequest.of(0, 2, Sort.by("name").ascending());
+        Page<Inventory> pagedInventory = inventoryService.getPagedInventory(pageRequest);
+
+        // Assert
+        assertEquals(2, pagedInventory.getContent().size());
+        assertEquals("Keyboard", pagedInventory.getContent().get(0).getName());
+        assertEquals("Laptop", pagedInventory.getContent().get(1).getName());
+        assertTrue(pagedInventory.hasNext());
+    }
 }

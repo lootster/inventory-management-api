@@ -4,6 +4,8 @@ import com.inventory.model.Inventory;
 import com.inventory.repository.InventoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,6 +35,7 @@ public class InventoryService {
     }
 
     public void updateInventory(Long id, Inventory updatedInventory) {
+
         Optional<Inventory> existingInventoryOpt = inventoryRepository.findById(id);
 
         if (existingInventoryOpt.isPresent()) {
@@ -55,4 +58,7 @@ public class InventoryService {
         }
     }
 
+    public Page<Inventory> getPagedInventory(PageRequest pageRequest) {
+        return inventoryRepository.findAll(pageRequest);
+    }
 }
