@@ -3,6 +3,7 @@ package com.inventory.service;
 import com.inventory.model.Inventory;
 import com.inventory.repository.InventoryRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,11 @@ public class InventoryServiceTest {
 
     @Autowired
     private InventoryRepository inventoryRepository;
+
+    @BeforeEach
+    public void clearInventory() {
+        inventoryRepository.deleteAll();
+    }
 
     @Test
     public void shouldSaveNewInventory() {
@@ -126,4 +132,46 @@ public class InventoryServiceTest {
         assertEquals("Laptop", pagedInventory.getContent().get(1).getName());
         assertTrue(pagedInventory.hasNext());
     }
+
+    @Test
+    public void shouldSearchInventoryByNameOrDescription() {
+        // Arrange: Create and save inventory items
+        Inventory inventory1 = new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10);
+        Inventory inventory2 = new Inventory("Smartphone", "Apple iPhone", new BigDecimal("999.99"), 5);
+        inventoryService.createInventory(inventory1);
+        inventoryService.createInventory(inventory2);
+
+        // Act: Search by name or description
+        List<Inventory> searchResults = inventoryService.searchInventory("Laptop");
+
+        // Assert: Verify the search results
+        assertNotNull(searchResults);
+        assertEquals(1, searchResults.size(), "Only one inventory item should match the search");
+        assertEquals("Laptop", searchResults.get(0).getName());
+
+        // Act: Search by description
+        List<Inventory> searchResultsByDescription = inventoryService.searchInventory("Apple");
+
+        // Assert: Verify the search results by description
+        assertNotNull(searchResultsByDescription);
+        assertEquals(1, searchResultsByDescription.size(), "Only one inventory item should match the search by description");
+        assertEquals("Smartphone", searchResultsByDescription.get(0).getName());
+    }
+
+    @Test
+    public void shouldFindInventoryBelowStockThreshold() {
+        // Arrange
+        Inventory item1 = new Inventory("Item1", "Low stock item", new BigDecimal("50.00"), 2);
+        Inventory item2 = new Inventory("Item2", "Sufficient stock", new BigDecimal("75.00"), 20);
+        inventoryRepository.save(item1);
+        inventoryRepository.save(item2);
+
+        // Act
+        List<Inventory> itemsBelowThreshold = inventoryService.findInventoryBelowStockThreshold(5);
+
+        // Assert
+        assertTrue(itemsBelowThreshold.contains(item1), "Should include item1 as it's below threshold");
+        assertFalse(itemsBelowThreshold.contains(item2), "Should not include item2 as it's above threshold");
+    }
+
 }

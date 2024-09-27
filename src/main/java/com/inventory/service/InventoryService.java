@@ -61,4 +61,13 @@ public class InventoryService {
     public Page<Inventory> getPagedInventory(PageRequest pageRequest) {
         return inventoryRepository.findAll(pageRequest);
     }
+
+    public List<Inventory> searchInventory(String keyword) {
+        return inventoryRepository.searchInventory(keyword, keyword);
+    }
+
+    public List<Inventory> findInventoryBelowStockThreshold(int threshold) {
+        return inventoryRepository.findByStockQuantityLessThan(threshold);
+    }
+
 }
