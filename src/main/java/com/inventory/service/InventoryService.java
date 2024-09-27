@@ -34,7 +34,7 @@ public class InventoryService {
         return inventoryRepository.findById(id);
     }
 
-    public void updateInventory(Long id, Inventory updatedInventory) {
+    public Inventory updateInventory(Long id, Inventory updatedInventory) {
 
         Optional<Inventory> existingInventoryOpt = inventoryRepository.findById(id);
 
@@ -44,7 +44,7 @@ public class InventoryService {
             existingInventory.setDescription(updatedInventory.getDescription());
             existingInventory.setPrice(updatedInventory.getPrice());
             existingInventory.setStockQuantity(updatedInventory.getStockQuantity());
-            inventoryRepository.save(existingInventory);
+            return inventoryRepository.save(existingInventory);
         } else {
             throw new EntityNotFoundException("Inventory not found with ID: " + id);
         }
