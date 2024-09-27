@@ -1,4 +1,4 @@
-package com.inventory.service;
+package com.inventory.Service;
 
 import com.inventory.model.Inventory;
 import com.inventory.repository.InventoryRepository;

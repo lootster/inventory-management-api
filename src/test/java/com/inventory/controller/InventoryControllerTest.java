@@ -1,4 +1,4 @@
-package com.inventory.service.controller;
+package com.inventory.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inventory.model.Inventory;
@@ -31,14 +31,13 @@ public class InventoryControllerTest {
     public void setUp() {
         // Clear the inventory table before each test
         inventoryRepository.deleteAll();
-
-        // Arrange: Populate with test data
-        inventoryRepository.save(new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10));
-        inventoryRepository.save(new Inventory("Mouse", "Logitech", new BigDecimal("25.00"), 100));
     }
 
     @Test
     public void shouldReturnAllInventoryItems() throws Exception {
+        inventoryRepository.save(new Inventory("Laptop", "Dell XPS", new BigDecimal("1200.00"), 10));
+        inventoryRepository.save(new Inventory("Mouse", "Logitech", new BigDecimal("25.00"), 100));
+
         // Act: Perform GET request and expect a JSON response
         mockMvc.perform(get("/api/inventory/items")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -121,5 +120,29 @@ public class InventoryControllerTest {
                 .andExpect(jsonPath("$.content[1].name").value("Keyboard"));  // Second item is Keyboard
     }
 
+    @Test
+    public void shouldSearchInventoryByNameOrDescription() throws Exception {
+        // Arrange: Create and save inventory items
+        inventoryRepository.save(new Inventory("Laptop", "Dell XPS Laptop", new BigDecimal("1200.00"), 10));
+        inventoryRepository.save(new Inventory("Smartphone", "Apple iPhone", new BigDecimal("999.99"), 5));
+
+        // Act & Assert: Perform GET request with search parameter 'Laptop'
+        mockMvc.perform(get("/api/inventory/items/search")
+                        .param("query", "Laptop")  // Searching by name
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()").value(1))  // Ensure one item is returned
+                .andExpect(jsonPath("$[0].name").value("Laptop"));  // First item is Laptop
+
+        // Act & Assert: Perform GET request with search parameter 'Apple'
+        mockMvc.perform(get("/api/inventory/items/search")
+                        .param("query", "Apple")  // Searching by description
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()").value(1))  // Ensure one item is returned
+                .andExpect(jsonPath("$[0].name").value("Smartphone"));  // First item is Smartphone
+    }
 
 }

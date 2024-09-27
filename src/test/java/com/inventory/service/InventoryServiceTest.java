@@ -1,5 +1,6 @@
 package com.inventory.service;
 
+import com.inventory.Service.InventoryService;
 import com.inventory.model.Inventory;
 import com.inventory.repository.InventoryRepository;
 import org.junit.jupiter.api.Test;

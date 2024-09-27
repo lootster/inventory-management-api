@@ -1,12 +1,10 @@
 package com.inventory.controller;
 
 import com.inventory.model.Inventory;
-import com.inventory.service.InventoryService;
+import com.inventory.Service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +37,16 @@ public class InventoryController {
 
         return new ResponseEntity<>(inventoryPage, HttpStatus.OK);
     }
+
+    @GetMapping("/items/search")
+    public ResponseEntity<List<Inventory>> searchInventory(@RequestParam("query") String query) {
+        // Use the service layer to search inventory by name or description
+        List<Inventory> searchResults = inventoryService.searchInventory(query);
+
+        // Return a response with the search results
+        return new ResponseEntity<>(searchResults, HttpStatus.OK);
+    }
+
 
     // POST request to create a new inventory item
     @PostMapping("/items")
